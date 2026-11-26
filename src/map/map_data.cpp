@@ -23,7 +23,7 @@ void MapData::validate() const {
     for (int y = 0; y < rows; ++y) {
         for (int x = 0; x < cols; ++x) {
             const Cell& cell = at(x, y);
-            if (int(cell.terrain) > int(Terrain::Sand) || int(cell.object) > int(Object::Tree))
+            if (int(cell.terrain) >= int(terrainCatalog.size()) || int(cell.object) >= int(objectCatalog.size()) || cell.rotation < 0 || cell.rotation > 3)
                 throw std::runtime_error("Unknown map tile");
             if (!cell.spawn) continue;
             hasSpawn = true;

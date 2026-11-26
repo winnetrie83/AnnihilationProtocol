@@ -14,7 +14,7 @@ void drawTank(const Vehicles::Tank& tank, Texture2D body, Texture2D barrel) {
     // Vereiste 38: 38. at least 4 useful const references for variables
     // De renderer leest de originele tankstatistieken zonder kopie.
     const auto& s = tank.stats();
-    drawPart(body,tank.position(),s.spriteScale,tank.heading(),.5f);
+    drawPart(body,tank.position(),s.spriteScale,tank.heading()+180.f,.5f);
     drawPart(barrel,tank.position(),s.spriteScale,tank.aim(),s.barrelPivotY);
 }
 }

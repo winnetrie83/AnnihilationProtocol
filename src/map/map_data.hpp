@@ -4,14 +4,27 @@
 #include <cstdint>
 #include <vector>
 #include "math.hpp"
+#include "map_catalog.hpp"
 
 namespace Battlefield {
 constexpr int cols = 24, rows = 16, tile = 64;
 // Vereiste 37: 37. 2 useful unsigned chars or other better usage of memory efficient type
 // Terrein en obstakel hebben elk maar een byte nodig per kaartcel.
-enum class Terrain : std::uint8_t { Grass, RoadX, RoadY, Crossing, Sand };
-enum class Object : std::uint8_t { None, Sandbag, Tree };
-struct Cell { Terrain terrain = Terrain::Grass; Object object = Object::None; bool spawn = false; };
+enum class Terrain : std::uint8_t { Grass, RoadX, RoadY, Crossing, Sand, Grass2, Sand2, GrassCornerUL, GrassCornerUR,
+    GrassCornerLL, GrassCornerLR, GrassSplitN, GrassSplitE, GrassSplitS, GrassSplitW,
+    SandRoadX, SandRoadY, SandCrossing, SandCornerUL, SandCornerUR, SandCornerLL, SandCornerLR };
+enum class Object : std::uint8_t { None, Sandbag, Tree, BeigeSandbag, OpenSandbag, GreenTreeSmall, BrownTreeLarge,
+    BrownTreeSmall, WoodCrate, MetalCrate, RedBarrel, GreenBarrel, BlackBarrel, RustBarrel,
+    MetalBarricade, WoodBarricade, RedFence, YellowFence, LargeOilSpill, SmallOilSpill, GreenTwigs, BrownTwigs };
+// Background and object data are separate layers, even when stored in one grid cell.
+struct Cell {
+    Terrain terrain = Terrain::Grass;
+    Object object = Object::None;
+    bool spawn = false;
+    int rotation = 0; // quarter turns, 0..3
+    bool solid = true;
+    bool blocks() const { return object != Object::None && solid; }
+};
 
 class MapData {
 public:

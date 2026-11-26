@@ -2,6 +2,7 @@
 // Voorkomt dat dit headerbestand meermaals wordt verwerkt.
 #pragma once
 #include "raylib.h"
+#include "map_catalog.hpp"
 #include <array>
 #include <filesystem>
 #include <string>
@@ -16,9 +17,10 @@ public:
     ~GameAssets();
     GameAssets(const GameAssets&) = delete;
     GameAssets& operator=(const GameAssets&) = delete;
-    std::array<Texture2D,5> terrain{};
+    std::array<Texture2D,Battlefield::terrainCatalog.size()> terrain{};
+    std::array<Texture2D,Battlefield::objectCatalog.size()> objects{};
     std::array<Texture2D,2> bodies{}, barrels{};
-    Texture2D bag{}, tree{}, bullet{};
+    Texture2D bullet{};
     const std::filesystem::path& root() const { return assetRoot; }
 private:
     std::filesystem::path assetRoot;

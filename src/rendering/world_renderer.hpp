@@ -4,6 +4,7 @@
 #include "game_assets.hpp"
 #include "world.hpp"
 namespace Rendering {
+void drawObject(const Battlefield::Cell& cell,const GameAssets& assets,float x,float y,Color tint = WHITE);
 void drawMap(const Battlefield::MapData& map, const GameAssets& assets, bool grid, bool showSpawns = false);
 void drawWorld(const Battlefield::World& world, const GameAssets& assets, Camera2D camera, bool grid);
 }

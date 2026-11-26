@@ -1,4 +1,4 @@
-# Annihilation Protocol v0.2.0 — Map editor
+# Annihilation Protocol v0.2.1 — Editor interaction and tank orientation
 
 C++17 / CMake / raylib 5.5. Windows + Qt Creator (Desktop MinGW).
 
@@ -19,7 +19,7 @@ cmake --build build -j 4
 build\AnnihilationProtocol.exe
 ```
 
-The eight supplied asset packs remain unchanged and are not included in the v0.2.0 update ZIP. Keep the existing `assets/` folder (including licenses) from v0.1.3 beside CMakeLists.txt. For a clean PC, use a complete repository checkout containing the assets. CMake copies them next to the executable. The current game uses selected Retina sprites and a sound effect. Other assets are reserved for future releases. Both tank types use matching Retina PNG _outline chassis and barrel sprites, shared native scale, point filtering and clamped sampling. The barrel rotates around its base (80% of sprite height); muzzle distance follows the same geometry. SVG assets are not used.
+The eight supplied asset packs remain unchanged and are not included in the v0.2.1 update ZIP. Keep the existing `assets/` folder (including licenses) from v0.1.3 beside CMakeLists.txt. For a clean PC, use a complete repository checkout containing the assets. CMake copies them next to the executable. The current game uses selected Retina sprites and a sound effect. Other assets are reserved for future releases. Both tank types use matching Retina PNG _outline chassis and barrel sprites, shared native scale, point filtering and clamped sampling. The barrel rotates around its base (80% of sprite height); muzzle distance follows the same geometry. SVG assets are not used.
 
 ## Controls
 W/S drive, A/D rotate chassis, mouse aims turret, left mouse fires, scroll zooms, G toggles grid, F2 resets current tank, F3 switches between medium and heavy (resets training state), Esc pauses, F11 fullscreen. Training range has solid obstacles, map boundaries and projectile collisions. No opponents or damage system yet.
@@ -27,16 +27,14 @@ W/S drive, A/D rotate chassis, mouse aims turret, left mouse fires, scroll zooms
 ## Architecture
 `AnnihilationProtocol::GameApplication` manages the game loop, input and audio lifetime. `UI` draws menus, `Rendering` loads textures and draws the battlefield, `Battlefield::World` owns the simulation, `Vehicles::Tank` implements shared tank behavior and `Weapons::Shot` represents a projectile. `MediumTank` and `HeavyTank` retain their existing statistics. Shared vector math lives in `common/math.hpp`. One executable, no separate core library or test target. Headers are explicitly listed in CMake. The host will run inside the graphical game, not as a separate server executable.
 
-The original training layout, controls, tank stats and asset paths are unchanged. LAN remains a placeholder; damage, opponents and persistent settings are not implemented. Map data, file I/O and simulation compiled with C++17 and passed a temporary local smoke check (not shipped); the full graphical build and runtime have not been verified in this environment.
+The original training layout, controls and tank stats are retained. Tank body rendering now adds 180 degrees, without changing turret aim or movement. LAN remains a placeholder; damage, opponents and persistent settings are not implemented. Map data, file I/O and simulation compiled with C++17 and passed a temporary local smoke check (not shipped); the full graphical build and runtime have not been verified in this environment.
 
 ## Map editor
-Open Map Editor in the main menu. The editor starts with a copy of the training map. New map creates an empty grass map; choose a terrain, obstacle or spawn tool on the left, then click or drag across tiles. Right mouse resets a tile to grass and clears its obstacle and spawn; Clear object removes the obstacle and spawn without changing the terrain. The green S denotes a spawn. The map is fixed at 24 × 16 tiles (64 world units per tile). Multiple spawn markers can be stored; playtest uses the first in row order. Each spawn must be away from the outer edge, on an empty cell with its four neighbours clear, so both tank types fit.
+Open Map Editor in the main menu. The editor starts with a copy of the training map. Terrain and Objects tabs contain paginated thumbnail palettes (22 terrain tiles and 21 object types); the Spawn point tool is separate. Terrain painting changes only the background. Physical objects and spawn markers are placed by clicking an empty cell, with a transparent grid-snapped preview. Esc cancels placement or selection; Back returns to the main menu. In Select mode, click an object to highlight its cell. Right-click an object to open its properties (rotation in 90-degree steps, collision on/off, delete); close the menu to keep the selection. Ctrl+C copies the selected object and its properties; Ctrl+V starts placement of that copy. Delete removes only the selected object or marker, leaving terrain unchanged. Oil spills and twigs start with collision disabled. The collision footprint remains a whole grid cell when enabled; rotation changes the sprite only. One object or spawn marker per cell, fixed 24 × 16 map (64 world units per cell).
 
-Click the name field to enter a name (1–32 ASCII letters, digits, hyphen or underscore). Save and Load use `maps/custom/<name>.json` in the source project directory configured by CMake. Confirm before overwriting a saved map or discarding unsaved edits with New/Load. Back returns to the menu while keeping the in-memory draft until the game closes. Playtest loads an independent copy directly into the existing simulation, even without saving. Use Esc and Return to editor to continue editing. F2/F3 reset the tank at the custom spawn. Training from the main menu restores the original training map and spawn.
+Click the name field to enter a name (1–32 ASCII letters, digits, hyphen or underscore). Save and Load use `maps/custom/<name>.json` in the configured source directory. Confirm before overwriting or discarding unsaved edits with New/Load. Playtest loads an independent copy; Esc and Return to editor return to the draft. F2/F3 reset the tank at the custom spawn. Training restores the original training map. Spawn validation is conservative: the spawn cell and four neighbours must have no objects.
 
-The JSON file has version 1 and exactly 384 `[terrain, object, spawn]` entries in row order. Terrain IDs: 0 grass, 1 horizontal road, 2 vertical road, 3 crossing, 4 sand. Object IDs: 0 none, 1 sandbag, 2 tree. Spawn is 0 or 1. The small reader accepts the game's fixed key order and layout, not arbitrary JSON schemas. No new dependency, external editor, asset or additional CMake target is needed. Saving writes directly to the selected file; keep backups of important maps.
-
-`Battlefield::MapData` owns the cells and validates spawn positions; `Battlefield::MapFile` reads/writes maps; `MapEditor::Editor` handles the palette, input and editor screen. Rendering uses the same `drawMap` function for editing and playing.
+Map JSON version 2 stores `[terrain, object, spawn, rotation, solid]` per cell. Rotation is 0–3 quarter turns; solid is 0 or 1. Version 1 maps remain readable with rotation 0 and collision enabled by default. Stable asset IDs are listed in `src/map/map_catalog.hpp`; append entries instead of reordering. The editor and game share `Rendering::drawMap`: background first, then objects. The editor input and palette are split into `editor_objects.cpp` and `editor_palette.cpp`. No additional dependency or CMake target. Saving writes directly to the chosen file; keep backups of important maps.
 
 ## Roadmap
 Local combat, LAN multiplayer, vehicles and infantry, then game modes. No new assets or tests in this release.
@@ -62,7 +60,7 @@ Search for `Vereiste X:` in the source or this README. The English descriptions 
 | Vereiste 14: | 14. maintainability by clean uniform code style and good function naming and/or comments everywhere | Deels | Refactored; continue review |
 | Vereiste 15: | 15. separate header files | Aanwezig | Headers next to source |
 | Vereiste 16: | 16. one complete project that compiles and does not crash | Deels | Core syntax check only; Windows build pending |
-| Vereiste 17: | 17. fully working project | Deels | Training only; planned game features missing |
+| Vereiste 17: | 17. fully working project | Deels | Training and map editor; planned combat and LAN features missing |
 | Vereiste 18: | 18. sufficient git commits (+/- weekly) | Open | User maintains weekly Git commits |
 | Vereiste 19: | 19. correct files on git | Deels | .gitignore present; repository not supplied |
 | Vereiste 20: | 20. working build manual as readme on GitHub (project must be possible to build from scratch on a clean PC) | Deels | Build section above; clean PC verification pending |

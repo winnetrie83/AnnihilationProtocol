@@ -45,7 +45,7 @@ bool World::blocked(Vec p, float r) const {
         return true;
     for (int y = int((p.y-r)/tile); y <= int((p.y+r)/tile); ++y) {
         for (int x = int((p.x-r)/tile); x <= int((p.x+r)/tile); ++x) {
-            if (at(x,y).object == Object::None) continue;
+            if (!at(x,y).blocks()) continue;
             const float cx = std::clamp(p.x, float(x*tile), float((x+1)*tile));
             const float cy = std::clamp(p.y, float(y*tile), float((y+1)*tile));
             if ((p.x-cx)*(p.x-cx)+(p.y-cy)*(p.y-cy) <= r*r) return true;

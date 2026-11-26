@@ -19,11 +19,11 @@ void MapFile::save(const std::string& name, const MapData& map) const {
     std::filesystem::create_directories(directory);
     std::ofstream out(file);
     if (!out) throw std::runtime_error("Cannot open map for writing");
-    out << "{\n  \"version\": 1,\n  \"cells\": [\n";
+    out << "{\n  \"version\": 2,\n  \"cells\": [\n";
     for (int y = 0; y < rows; ++y) {
         for (int x = 0; x < cols; ++x) {
             const Cell& cell = map.at(x,y);
-            out << "    [" << int(cell.terrain) << ',' << int(cell.object) << ',' << int(cell.spawn) << ']';
+            out << "    [" << int(cell.terrain) << ',' << int(cell.object) << ',' << int(cell.spawn) << ',' << cell.rotation << ',' << int(cell.solid) << ']';
             if (x != cols-1 || y != rows-1) out << ',';
             out << '\n';
         }
@@ -46,8 +46,12 @@ void key(std::istream& in, const std::string& wanted) {
 }
 int number(std::istream& in, int maximum) {
     in >> std::ws;
-    int value = in.get() - '0';
-    if (value < 0 || value > maximum) throw std::runtime_error("Invalid map value");
+    int value = 0, digits = 0;
+    while (in.peek() >= '0' && in.peek() <= '9') {
+        value = value * 10 + in.get() - '0';
+        if (++digits > 3 || value > maximum || (digits > 1 && value < 10)) throw std::runtime_error("Invalid map value");
+    }
+    if (!digits || value > maximum) throw std::runtime_error("Invalid map value");
     return value;
 }
 }
@@ -55,16 +59,19 @@ MapData MapFile::load(const std::string& name) const {
     std::ifstream in(path(name));
     if (!in) throw std::runtime_error("Map file not found");
     expect(in,'{'); key(in,"version");
-    if (number(in,1) != 1) throw std::runtime_error("Unsupported map version");
+    const int version = number(in,2);
+    if (version == 0) throw std::runtime_error("Unsupported map version");
     expect(in,','); key(in,"cells"); expect(in,'[');
     std::vector<Cell> cells;
     for (int i = 0; i < cols*rows; ++i) {
         if (i != 0) expect(in,',');
-        expect(in,'['); int terrain = number(in,4);
-        expect(in,','); int object = number(in,2);
+        expect(in,'['); int terrain = number(in,version == 1 ? 4 : int(terrainCatalog.size())-1);
+        expect(in,','); int object = number(in,version == 1 ? 2 : int(objectCatalog.size())-1);
         expect(in,','); bool spawn = number(in,1) != 0;
+        int rotation = 0; bool solid = true;
+        if (version == 2) { expect(in,','); rotation = number(in,3); expect(in,','); solid = number(in,1) != 0; }
         expect(in,']');
-        cells.push_back({Terrain(terrain),Object(object),spawn});
+        cells.push_back({Terrain(terrain),Object(object),spawn,rotation,solid});
     }
     expect(in,']'); expect(in,'}');
     in >> std::ws;

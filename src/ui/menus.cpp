@@ -17,7 +17,7 @@ bool button(const char* label, Rectangle bounds, bool enabled) {
 }
 MenuAction mainMenu(int sw, int sh) {
     centered("ANNIHILATION PROTOCOL",42,42,RAYWHITE);
-    centered("TACTICAL TANK COMBAT  /  v0.2.0",100,18,LIGHTGRAY);
+    centered("TACTICAL TANK COMBAT  /  v0.2.1",100,18,LIGHTGRAY);
     float width=std::min(420.f,float(sw-40)), x=(sw-width)/2;
     float h=std::min(48.f,(sh-190)/7.f), y=145;
     const char* labels[]={"Singleplayer - Training","Host LAN Game","Join LAN Game","Map Editor","Settings","Exit"};

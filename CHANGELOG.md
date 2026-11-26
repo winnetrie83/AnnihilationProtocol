@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1 – Editor interaction and tank orientation
+- Separate terrain and object painting; background is preserved by object edits.
+- Thumbnail palettes with 22 terrain types and 21 object types from existing Retina PNG assets.
+- Grid-snapped ghost placement, Escape to exit build mode, selection highlight, Ctrl+C / Ctrl+V, Delete.
+- Right-click object properties: rotation, collision and deletion.
+- Version 2 map files preserve properties; version 1 maps remain readable.
+- Correct tank body orientation by adding 180 degrees to rendering only.
+- Keep one executable and existing assets; no new tests or documentation files.
+
 ## 0.2.0 - Map editor
 - Add an integrated map editor with terrain and obstacle tools, spawn markers and a fixed 24 × 16 grid.
 - Save and load named JSON maps with input validation and overwrite confirmation.

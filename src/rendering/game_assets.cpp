@@ -17,16 +17,17 @@ Texture2D GameAssets::load(const std::string& name) {
 GameAssets::GameAssets() {
     assetRoot=std::filesystem::path(GetApplicationDirectory())/"assets";
     if (!std::filesystem::exists(assetRoot)) assetRoot=ANNIHILATION_PROTOCOL_ASSETS;
-    textures.reserve(12);
+    textures.reserve(terrain.size()+objects.size()+5);
     try {
-        terrain={load("tileGrass1"),load("tileGrass_roadEast"),load("tileGrass_roadNorth"),load("tileGrass_roadCrossing"),load("tileSand1")};
+        for (std::size_t i=0; i<terrain.size(); ++i) terrain[i]=load(Battlefield::terrainCatalog[i].sprite);
+        for (std::size_t i=1; i<objects.size(); ++i) objects[i]=load(Battlefield::objectCatalog[i].sprite);
         const Vehicles::MediumTank medium;
         const Vehicles::HeavyTank heavy;
         bodies={load(medium.stats().bodySprite),load(heavy.stats().bodySprite)};
         barrels={load(medium.stats().barrelSprite),load(heavy.stats().barrelSprite)};
         for (auto texture : bodies) SetTextureFilter(texture,TEXTURE_FILTER_POINT);
         for (auto texture : barrels) SetTextureFilter(texture,TEXTURE_FILTER_POINT);
-        bag=load("sandbagBrown"); tree=load("treeGreen_large"); bullet=load("bulletBlue1_outline");
+        bullet=load("bulletBlue1_outline");
     } catch (...) {
         for (auto texture : textures) UnloadTexture(texture);
         throw;

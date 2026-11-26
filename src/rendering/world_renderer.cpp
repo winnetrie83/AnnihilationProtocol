@@ -12,6 +12,14 @@ static void sprite(Texture2D t,float x,float y,float w,float h,float angle=0) {
 // raylib verzorgt de 2D-camera, texturetransformaties, input en audio in het spel.
 // Vereiste 39: 39. at least 4 useful const references for functions
 // MapData en GameAssets worden via const reference gelezen; geen kopie of wijziging.
+void drawObject(const Battlefield::Cell& cell,const GameAssets& assets,float x,float y,Color tint) {
+    if (cell.object == Battlefield::Object::None) return;
+    const auto texture = assets.objects.at(int(cell.object));
+    const float scale = 60.f / (texture.width > texture.height ? texture.width : texture.height);
+    const float w = texture.width * scale, h = texture.height * scale;
+    DrawTexturePro(texture,{0,0,float(texture.width),float(texture.height)},
+                   {x,y,w,h},{w/2,h/2},90.f*cell.rotation,tint);
+}
 void drawMap(const Battlefield::MapData& map,const GameAssets& assets,bool grid,bool showSpawns) {
     using namespace Battlefield;
     for (int y=0; y<rows; ++y) {
@@ -21,8 +29,13 @@ void drawMap(const Battlefield::MapData& map,const GameAssets& assets,bool grid,
             const auto& cell=map.at(x,y);
             float px=x*tile+tile/2.f, py=y*tile+tile/2.f;
             sprite(assets.terrain[int(cell.terrain)],px,py,tile,tile);
-            if (cell.object==Object::Sandbag) sprite(assets.bag,px,py,60,42);
-            if (cell.object==Object::Tree) sprite(assets.tree,px,py,64,64);
+        }
+    }
+    for (int y=0; y<rows; ++y) {
+        for (int x=0; x<cols; ++x) {
+            const auto& cell = map.at(x,y);
+            float px=x*tile+tile/2.f, py=y*tile+tile/2.f;
+            drawObject(cell,assets,px,py);
             if (showSpawns && cell.spawn) {
                 DrawCircleLines(int(px),int(py),20,GREEN);
                 DrawText("S",int(px)-7,int(py)-10,20,WHITE);

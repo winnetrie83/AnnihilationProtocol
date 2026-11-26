@@ -60,7 +60,7 @@ int GameApplication::run() {
         int sw=GetScreenWidth(), sh=GetScreenHeight();
         if (IsKeyPressed(KEY_ESCAPE)) {
             if (screen==Screen::Game) paused=!paused;
-            else screen=Screen::Menu;
+            else if (screen!=Screen::Editor) screen=Screen::Menu;
         }
         if (screen==Screen::Game) {
             if (IsKeyPressed(KEY_G)) grid=!grid;
@@ -129,7 +129,7 @@ int GameApplication::run() {
 // Een fout bij het laden van assets wordt gelogd; daarna sluiten audio en venster.
 int GameApplication::execute() {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE|FLAG_VSYNC_HINT);
-    InitWindow(1280,800,"Annihilation Protocol v0.2.0");
+    InitWindow(1280,800,"Annihilation Protocol v0.2.1");
     SetWindowMinSize(800,600);
     SetExitKey(KEY_NULL);
     SetTargetFPS(60);
