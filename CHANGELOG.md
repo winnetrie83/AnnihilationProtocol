@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.2 – Player spawns and larger maps
+- Add numbered spawn slots 1–4, context menu assignment, unique slot validation and capacity calculation for future LAN hosting.
+- Select any available player spawn for local playtesting. LAN remains unimplemented.
+- Add independent width/height controls (8–128 tiles per axis), preserve existing cells, refuse destructive shrinking.
+- Add editor zoom, middle-button pan and Fit; render only the visible map region.
+- Use actual map dimensions for collision and keep camera centered on local tank from the first game frame.
+- Save map format v3; load legacy v1/v2 maps with up to four numbered spawns.
+- Preserve assets, one executable and C++ requirement comments; no new shipped tests.
+
 ## 0.2.1 – Editor interaction and tank orientation
 - Separate terrain and object painting; background is preserved by object edits.
 - Thumbnail palettes with 22 terrain types and 21 object types from existing Retina PNG assets.

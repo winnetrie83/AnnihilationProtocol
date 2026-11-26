@@ -3,50 +3,85 @@
 
 namespace Battlefield {
 namespace {
-std::size_t index(int x, int y) {
-    if (x < 0 || x >= cols || y < 0 || y >= rows)
-        throw std::out_of_range("Map coordinates outside world");
-    return static_cast<std::size_t>(y * cols + x);
+std::size_t cellCount(int width, int height) {
+    if (width < minMapSize || width > maxMapSize || height < minMapSize || height > maxMapSize)
+        throw std::invalid_argument("Map dimensions must be 8..128 tiles");
+    return static_cast<std::size_t>(width * height);
 }
+}
+std::size_t MapData::index(int x, int y) const {
+    if (x < 0 || x >= columns || y < 0 || y >= rows)
+        throw std::out_of_range("Map coordinates outside world");
+    return static_cast<std::size_t>(y * columns + x);
 }
 // Vereiste 26: 26. constructor forwarding
-// De lege kaart gebruikt dezelfde constructor en controle als een geladen kaart.
-MapData::MapData() : MapData(std::vector<Cell>(cols * rows)) {}
-MapData::MapData(const std::vector<Cell>& cells) : cells(cells) {
-    if (cells.size() != cols * rows) throw std::invalid_argument("Incorrect map size");
+// De standaardkaart gebruikt dezelfde constructor als een kaart met gekozen afmetingen.
+MapData::MapData() : MapData(defaultCols, defaultRows) {}
+MapData::MapData(int width, int height)
+    : columns(width), rows(height), cells(cellCount(width,height)) {}
+MapData::MapData(int width, int height, const std::vector<Cell>& cells)
+    : columns(width), rows(height), cells(cells) {
+    if (cells.size() != cellCount(width,height)) throw std::invalid_argument("Incorrect map size");
 }
 const Cell& MapData::at(int x, int y) const { return cells.at(index(x, y)); }
 void MapData::setCell(int x, int y, Cell cell) { cells.at(index(x, y)) = cell; }
 
+void MapData::resize(int width, int height) {
+    MapData resized(width,height);
+    for (int y=0; y<rows; ++y)
+        for (int x=0; x<columns; ++x) {
+            const Cell& cell=at(x,y);
+            if (x<width && y<height) resized.setCell(x,y,cell);
+            else if (cell.object!=Object::None || cell.spawn || cell.terrain!=Terrain::Grass)
+                throw std::runtime_error("Resize would remove edited tiles or objects");
+        }
+    *this=resized;
+}
+bool MapData::hasSpawn(int player) const {
+    if (player<1 || player>maxPlayers) return false;
+    for (const auto& cell: cells) if (cell.spawn==player) return true;
+    return false;
+}
+int MapData::playerCapacity() const {
+    int count=0;
+    for (int player=1; player<=maxPlayers; ++player) if (hasSpawn(player)) ++count;
+    return count;
+}
+int MapData::nextSpawnPlayer() const {
+    for (int player=1; player<=maxPlayers; ++player)
+        if (!hasSpawn(player)) return player;
+    return 0;
+}
 void MapData::validate() const {
-    bool hasSpawn = false;
-    for (int y = 0; y < rows; ++y) {
-        for (int x = 0; x < cols; ++x) {
-            const Cell& cell = at(x, y);
-            if (int(cell.terrain) >= int(terrainCatalog.size()) || int(cell.object) >= int(objectCatalog.size()) || cell.rotation < 0 || cell.rotation > 3)
+    bool used[maxPlayers+1]{};
+    for (int y=0; y<rows; ++y) {
+        for (int x=0; x<columns; ++x) {
+            const Cell& cell=at(x,y);
+            if (int(cell.terrain)>=int(terrainCatalog.size()) || int(cell.object)>=int(objectCatalog.size()) || cell.rotation<0 || cell.rotation>3)
                 throw std::runtime_error("Unknown map tile");
             if (!cell.spawn) continue;
-            hasSpawn = true;
-            if (x == 0 || y == 0 || x == cols-1 || y == rows-1 ||
-                cell.object != Object::None || at(x-1,y).object != Object::None ||
-                at(x+1,y).object != Object::None || at(x,y-1).object != Object::None ||
-                at(x,y+1).object != Object::None)
+            if (cell.spawn>maxPlayers || used[cell.spawn]) throw std::runtime_error("Each player needs a unique spawn");
+            used[cell.spawn]=true;
+            if (x==0 || y==0 || x==columns-1 || y==rows-1 || cell.object!=Object::None ||
+                at(x-1,y).object!=Object::None || at(x+1,y).object!=Object::None ||
+                at(x,y-1).object!=Object::None || at(x,y+1).object!=Object::None)
                 throw std::runtime_error("Spawn needs a clear tile and four free neighbours");
         }
     }
-    if (!hasSpawn) throw std::runtime_error("Place at least one spawn point");
+    if (!playerCapacity()) throw std::runtime_error("Place at least one spawn point");
 }
-AnnihilationProtocol::Vec MapData::spawnPosition() const {
+AnnihilationProtocol::Vec MapData::spawnPosition(int player) const {
     validate();
-    for (int y = 0; y < rows; ++y)
-        for (int x = 0; x < cols; ++x)
-            if (at(x,y).spawn) return {(x+.5f)*tile,(y+.5f)*tile};
-    throw std::runtime_error("No spawn point");
+    if (player<1 || player>maxPlayers) throw std::runtime_error("Invalid player number");
+    for (int y=0; y<rows; ++y)
+        for (int x=0; x<columns; ++x)
+            if (at(x,y).spawn==player) return {(x+.5f)*tile,(y+.5f)*tile};
+    throw std::runtime_error("No spawn for this player");
 }
 MapData MapData::training() {
     MapData map;
-    for (int y = 0; y < rows; ++y) {
-        for (int x = 0; x < cols; ++x) {
+    for (int y = 0; y < map.height(); ++y) {
+        for (int x = 0; x < map.width(); ++x) {
             Cell cell;
             if (x == 12 && y == 7) cell.terrain = Terrain::Crossing;
             else if (x == 12) cell.terrain = Terrain::RoadY;
@@ -63,7 +98,7 @@ MapData MapData::training() {
         map.setCell(int(p.x),int(p.y),cell);
     }
     Cell spawn = map.at(12,10);
-    spawn.spawn = true;
+    spawn.spawn = 1;
     map.setCell(12,10,spawn);
     return map;
 }

@@ -1,5 +1,6 @@
 #include "world_renderer.hpp"
 #include "tank_renderer.hpp"
+#include <algorithm>
 namespace Rendering {
 // Vereiste 30: 30. default values in function definition
 // Terreintegels hoeven geen rotatie mee te geven; projectielen wel.
@@ -20,10 +21,19 @@ void drawObject(const Battlefield::Cell& cell,const GameAssets& assets,float x,f
     DrawTexturePro(texture,{0,0,float(texture.width),float(texture.height)},
                    {x,y,w,h},{w/2,h/2},90.f*cell.rotation,tint);
 }
-void drawMap(const Battlefield::MapData& map,const GameAssets& assets,bool grid,bool showSpawns) {
+void drawMap(const Battlefield::MapData& map,const GameAssets& assets,bool grid,bool showSpawns,const Camera2D* camera) {
     using namespace Battlefield;
-    for (int y=0; y<rows; ++y) {
-        for (int x=0; x<cols; ++x) {
+    int firstX=0, firstY=0, lastX=map.width(), lastY=map.height();
+    if (camera) {
+        Vector2 a=GetScreenToWorld2D({0,0},*camera);
+        Vector2 b=GetScreenToWorld2D({float(GetScreenWidth()),float(GetScreenHeight())},*camera);
+        firstX=std::clamp(int(a.x/tile)-1,0,lastX);
+        firstY=std::clamp(int(a.y/tile)-1,0,lastY);
+        lastX=std::clamp(int(b.x/tile)+2,firstX,lastX);
+        lastY=std::clamp(int(b.y/tile)+2,firstY,lastY);
+    }
+    for (int y=firstY; y<lastY; ++y) {
+        for (int x=firstX; x<lastX; ++x) {
             // Vereiste 38: 38. at least 4 useful const references for variables
             // Lees de kaartcel zonder een kopie te maken of de wereld te wijzigen.
             const auto& cell=map.at(x,y);
@@ -31,14 +41,14 @@ void drawMap(const Battlefield::MapData& map,const GameAssets& assets,bool grid,
             sprite(assets.terrain[int(cell.terrain)],px,py,tile,tile);
         }
     }
-    for (int y=0; y<rows; ++y) {
-        for (int x=0; x<cols; ++x) {
+    for (int y=firstY; y<lastY; ++y) {
+        for (int x=firstX; x<lastX; ++x) {
             const auto& cell = map.at(x,y);
             float px=x*tile+tile/2.f, py=y*tile+tile/2.f;
             drawObject(cell,assets,px,py);
             if (showSpawns && cell.spawn) {
                 DrawCircleLines(int(px),int(py),20,GREEN);
-                DrawText("S",int(px)-7,int(py)-10,20,WHITE);
+                DrawText(TextFormat("%d",int(cell.spawn)),int(px)-7,int(py)-10,20,WHITE);
             }
             if (grid) DrawRectangleLines(x*tile,y*tile,tile,tile,Fade(BLACK,.3f));
         }
@@ -46,7 +56,7 @@ void drawMap(const Battlefield::MapData& map,const GameAssets& assets,bool grid,
 }
 void drawWorld(const Battlefield::World& world,const GameAssets& assets,Camera2D camera,bool grid) {
     BeginMode2D(camera);
-    drawMap(world.mapData(),assets,grid);
+    drawMap(world.mapData(),assets,grid,false,&camera);
     const auto index=static_cast<std::size_t>(world.player().type());
     drawTank(world.player(),assets.bodies.at(index),assets.barrels.at(index));
     // Vereiste 38: 38. at least 4 useful const references for variables

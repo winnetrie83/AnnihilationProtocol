@@ -23,10 +23,10 @@ private:
     bool contextOpen = false;
     Vector2 contextPosition{};
     void palette(const Rendering::GameAssets& assets, int height);
-    void objectInput(Rectangle area, float scale);
+    void objectInput(Rectangle area, float scale, Rectangle viewport);
     void contextMenu();
     void cancelTool();
-    void drawSelection(Rectangle area, float scale, const Rendering::GameAssets& assets);
+    void drawSelection(Rectangle area, float scale, const Rendering::GameAssets& assets, Rectangle viewport);
     Battlefield::MapData map;
     Battlefield::MapFile files;
     std::string name = "custom_map";
@@ -39,5 +39,10 @@ private:
 
     void readName(Rectangle field);
     void reset();
+    void sizeControls();
+    Rectangle mapArea(Rectangle viewport, float& scale);
+    float editorZoom = 1;
+    Vector2 pan{};
+    int playtestPlayer = 1;
 };
 }

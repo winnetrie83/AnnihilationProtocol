@@ -11,6 +11,7 @@ Editor::Editor() : map(MapData::training()), files(std::filesystem::path(ANNIHIL
 void Editor::reset() {
     map = MapData();
     cancelTool();
+    editorZoom=1; pan={}; playtestPlayer=1;
     dirty = true;
     message = "New map: place a spawn point before saving or playing.";
 }
@@ -29,9 +30,8 @@ void Editor::readName(Rectangle field) {
 }
 Action Editor::draw(const Rendering::GameAssets& assets, World& world) {
     const int sw = GetScreenWidth(), sh = GetScreenHeight();
-    const float left = 200, top = 58;
-    const float scale = std::min((sw-left-14)/(cols*tile), (sh-top-100)/(rows*tile));
-    const Rectangle area{left,top,cols*tile*scale,rows*tile*scale};
+    const float left = 200, top = 88;
+    const Rectangle viewport{left,top,sw-left-14,sh-top-100};
     const Rectangle field{left,float(sh-78),float(std::min(260,sw-530)),28};
     if (!contextOpen) readName(field);
     DrawText("MAP EDITOR",12,12,26,RAYWHITE);
@@ -39,20 +39,26 @@ Action Editor::draw(const Rendering::GameAssets& assets, World& world) {
     DrawText(TextFormat("%s | Esc: select | Right: properties | Ctrl+C/V | Delete",modeName),int(left),26,14,LIGHTGRAY);
     if (IsKeyPressed(KEY_ESCAPE)) { cancelTool(); editingName=false; }
     palette(assets,sh);
+    sizeControls();
     if (UI::button(confirmNew ? "Confirm new" : "New map",{12,float(sh-118),176,30},!contextOpen)) {
         if (!dirty || confirmNew) { reset(); confirmNew = false; }
         else { confirmNew = true; message = "Click Confirm new to discard unsaved changes."; }
         confirmLoad = confirmSave = false;
     }
     if (UI::button("Back",{12,float(sh-48),176,32},!contextOpen)) { cancelTool(); return Action::Back; }
-    objectInput(area,scale);
+    float scale;
+    const Rectangle area=mapArea(viewport,scale);
+    objectInput(area,scale,viewport);
+    BeginScissorMode(int(viewport.x),int(viewport.y),int(viewport.width),int(viewport.height));
     Camera2D camera{};
     camera.offset = {area.x,area.y}; camera.zoom = scale;
     BeginMode2D(camera);
-    Rendering::drawMap(map,assets,true,true);
+    Rendering::drawMap(map,assets,true,true,&camera);
     EndMode2D();
-    drawSelection(area,scale,assets);
+    drawSelection(area,scale,assets,viewport);
     DrawRectangleLinesEx(area,1,LIGHTGRAY);
+    EndScissorMode();
+    DrawRectangleLinesEx(viewport,1,LIGHTGRAY);
     DrawRectangleRec(field,{35,45,38,255});
     DrawRectangleLinesEx(field,1,editingName ? GOLD : LIGHTGRAY);
     BeginScissorMode(int(field.x+2),int(field.y+2),int(field.width-4),int(field.height-4));
@@ -69,11 +75,11 @@ Action Editor::draw(const Rendering::GameAssets& assets, World& world) {
         }
         if (UI::button(confirmLoad ? "Confirm load" : "Load",{x+106,field.y,120,28},!contextOpen)) {
             if (dirty && !confirmLoad) { confirmLoad = true; message = "Click Confirm load to discard unsaved changes."; }
-            else { map = files.load(name); cancelTool(); dirty = false; confirmLoad = false; message = "Loaded: "+name+".json"; }
+            else { map = files.load(name); cancelTool(); editorZoom=1; pan={}; playtestPlayer=1; dirty = false; confirmLoad = false; message = "Loaded: "+name+".json"; }
             confirmNew = confirmSave = false;
         }
         if (UI::button("Playtest",{x+232,field.y,90,28},!contextOpen)) {
-            world.loadMap(map);
+            world.loadMap(map,playtestPlayer);
             message = "Editor map preserved during playtest.";
             return Action::Play;
         }

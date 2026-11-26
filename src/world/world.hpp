@@ -26,7 +26,8 @@ public:
     World();
     const Cell& at(int x, int y) const { return map.at(x,y); }
     const MapData& mapData() const { return map; }
-    void loadMap(const MapData& newMap);
+    void loadMap(const MapData& newMap, int playerNumber = 1);
+    int playerCapacity() const { return map.playerCapacity(); }
     void loadTraining();
     bool blocked(Vec position, float radius) const;
     void step(Input input, float dt);
@@ -37,7 +38,7 @@ public:
     unsigned shotCount() const { return fired; }
 private:
     MapData map;
-    Vec spawn{800,700};
+    Vec spawn{};
     // Vereiste 6: 6. useful and correct object composition (explain why)
     // World bezit de tank, projectielen en cellen; hun levensduur volgt de wereld.
     // De unieke eigenaar van de actieve tank ruimt deze bij een wissel automatisch op.

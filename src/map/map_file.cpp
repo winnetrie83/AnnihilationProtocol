@@ -19,12 +19,12 @@ void MapFile::save(const std::string& name, const MapData& map) const {
     std::filesystem::create_directories(directory);
     std::ofstream out(file);
     if (!out) throw std::runtime_error("Cannot open map for writing");
-    out << "{\n  \"version\": 2,\n  \"cells\": [\n";
-    for (int y = 0; y < rows; ++y) {
-        for (int x = 0; x < cols; ++x) {
+    out << "{\n  \"version\": 3,\n  \"width\": " << map.width() << ",\n  \"height\": " << map.height() << ",\n  \"cells\": [\n";
+    for (int y = 0; y < map.height(); ++y) {
+        for (int x = 0; x < map.width(); ++x) {
             const Cell& cell = map.at(x,y);
             out << "    [" << int(cell.terrain) << ',' << int(cell.object) << ',' << int(cell.spawn) << ',' << cell.rotation << ',' << int(cell.solid) << ']';
-            if (x != cols-1 || y != rows-1) out << ',';
+            if (x != map.width()-1 || y != map.height()-1) out << ',';
             out << '\n';
         }
     }
@@ -59,24 +59,34 @@ MapData MapFile::load(const std::string& name) const {
     std::ifstream in(path(name));
     if (!in) throw std::runtime_error("Map file not found");
     expect(in,'{'); key(in,"version");
-    const int version = number(in,2);
+    const int version = number(in,3);
     if (version == 0) throw std::runtime_error("Unsupported map version");
+    int width=defaultCols, height=defaultRows, legacyPlayer=0;
+    if (version==3) {
+        expect(in,','); key(in,"width"); width=number(in,maxMapSize);
+        expect(in,','); key(in,"height"); height=number(in,maxMapSize);
+        if (width<minMapSize || height<minMapSize) throw std::runtime_error("Map too small");
+    }
     expect(in,','); key(in,"cells"); expect(in,'[');
     std::vector<Cell> cells;
-    for (int i = 0; i < cols*rows; ++i) {
+    for (int i = 0; i < width*height; ++i) {
         if (i != 0) expect(in,',');
         expect(in,'['); int terrain = number(in,version == 1 ? 4 : int(terrainCatalog.size())-1);
         expect(in,','); int object = number(in,version == 1 ? 2 : int(objectCatalog.size())-1);
-        expect(in,','); bool spawn = number(in,1) != 0;
+        expect(in,','); int spawn = number(in,version==3 ? maxPlayers : 1);
+        if (version<3 && spawn) {
+            spawn=++legacyPlayer;
+            if (spawn>maxPlayers) throw std::runtime_error("Legacy map has more than four spawns");
+        }
         int rotation = 0; bool solid = true;
-        if (version == 2) { expect(in,','); rotation = number(in,3); expect(in,','); solid = number(in,1) != 0; }
+        if (version >= 2) { expect(in,','); rotation = number(in,3); expect(in,','); solid = number(in,1) != 0; }
         expect(in,']');
-        cells.push_back({Terrain(terrain),Object(object),spawn,rotation,solid});
+        cells.push_back({Terrain(terrain),Object(object),static_cast<std::uint8_t>(spawn),rotation,solid});
     }
     expect(in,']'); expect(in,'}');
     in >> std::ws;
     if (in.peek() != std::char_traits<char>::eof()) throw std::runtime_error("Extra map data");
-    MapData map(cells);
+    MapData map(width,height,cells);
     map.validate();
     return map;
 }

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(AnnihilationProtocol VERSION 0.2.1 LANGUAGES C CXX)
+project(AnnihilationProtocol VERSION 0.2.2 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -21,6 +21,7 @@ add_executable(AnnihilationProtocol
     src/main.cpp
     src/map/map_catalog.hpp
     src/editor/editor_palette.cpp
+    src/editor/editor_view.cpp
     src/editor/editor_objects.cpp
     src/map/map_data.cpp
     src/map/map_data.hpp

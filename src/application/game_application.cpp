@@ -100,6 +100,8 @@ int GameApplication::run() {
             }
             break;
         case Screen::Game:
+            camera.target=toVector2(world.player().position());
+            camera.offset={sw*.5f,sh*.5f}; camera.zoom=zoom;
             Rendering::drawWorld(world,assets,camera,grid);
             drawHud(world,sw,sh,playtest);
             if (paused && UI::pauseMenu(sw,sh,paused,playtest)) screen=playtest ? Screen::Editor : Screen::Menu;
@@ -129,7 +131,7 @@ int GameApplication::run() {
 // Een fout bij het laden van assets wordt gelogd; daarna sluiten audio en venster.
 int GameApplication::execute() {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE|FLAG_VSYNC_HINT);
-    InitWindow(1280,800,"Annihilation Protocol v0.2.1");
+    InitWindow(1280,800,"Annihilation Protocol v0.2.2");
     SetWindowMinSize(800,600);
     SetExitKey(KEY_NULL);
     SetTargetFPS(60);

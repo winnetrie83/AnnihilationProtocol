@@ -9,9 +9,9 @@ using Vehicles::MediumTank;
 using Vehicles::HeavyTank;
 // Vereiste 25: 25. member initialization in constructors (the stuff behind a colon)
 // De wereld krijgt meteen een trainingskaart en een concrete tank.
-World::World() : map(MapData::training()), tank(std::make_unique<MediumTank>()) {}
-void World::loadMap(const MapData& newMap) {
-    Vec newSpawn = newMap.spawnPosition();
+World::World() : map(MapData::training()), tank(std::make_unique<MediumTank>()) { spawn=map.spawnPosition(); resetTank(); }
+void World::loadMap(const MapData& newMap, int playerNumber) {
+    Vec newSpawn = newMap.spawnPosition(playerNumber);
     MapData copy(newMap);
     map = copy;
     spawn = newSpawn;
@@ -19,7 +19,7 @@ void World::loadMap(const MapData& newMap) {
 }
 void World::loadTraining() {
     map = MapData::training();
-    spawn = {800,700};
+    spawn = map.spawnPosition();
     resetTank();
 }
 void World::resetTank() {
@@ -41,7 +41,7 @@ void World::selectTank(TankType type) {
 bool World::blocked(Vec p, float r) const {
     if (!std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(r) || r < 0)
         return true;
-    if (p.x-r < 0 || p.y-r < 0 || p.x+r >= cols*tile || p.y+r >= rows*tile)
+    if (p.x-r < 0 || p.y-r < 0 || p.x+r >= map.width()*tile || p.y+r >= map.height()*tile)
         return true;
     for (int y = int((p.y-r)/tile); y <= int((p.y+r)/tile); ++y) {
         for (int x = int((p.x-r)/tile); x <= int((p.x+r)/tile); ++x) {

@@ -31,6 +31,6 @@ void Editor::palette(const Rendering::GameAssets& assets, int height) {
     if (UI::button("<",{12,y,45,27},!contextOpen && page>0)) --page;
     if (UI::button(">",{143,y,45,27},!contextOpen && page<lastPage)) ++page;
     DrawText(TextFormat("%d/%d",page+1,lastPage+1),76,int(y+6),14,LIGHTGRAY);
-    if (UI::button("Spawn point",{12,y+32,176,30},!contextOpen)) { cancelTool(); mode=Mode::Spawn; }
+    if (UI::button("Spawn point",{12,y+32,176,30},!contextOpen)) { cancelTool(); brush=Cell{}; mode=Mode::Spawn; }
 }
 }
