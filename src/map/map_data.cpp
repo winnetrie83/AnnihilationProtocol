@@ -70,7 +70,8 @@ void MapData::validate() const {
                     if (!obstacle.blocks()) continue;
                     float dx=std::abs((x+.5f)*tile-(xx*tile+obstacle.offsetX));
                     float dy=std::abs((y+.5f)*tile-(yy*tile+obstacle.offsetY));
-                    if (dx<obstacle.halfSize()+32 && dy<obstacle.halfSize()+32)
+                    const auto half = obstacle.objectHalfExtents();
+                    if (dx<half.x+32 && dy<half.y+32)
                         throw std::runtime_error("Scaled obstacle too close to spawn");
                 }
             if (x==0 || y==0 || x==columns-1 || y==rows-1 || cell.object!=Object::None ||

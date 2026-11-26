@@ -8,10 +8,10 @@ void Editor::drawSelection(Rectangle area,float scale,const Rendering::GameAsset
     float size=tile*scale;
     if (selectedX>=0) {
         const Cell& cell=map.at(selectedX,selectedY);
-        float half=(cell.spawn?22.f:cell.halfSize())*scale;
+        const auto half=cell.spawn?AnnihilationProtocol::Vec{22.f,22.f}:cell.objectHalfExtents();
         float cx=area.x+(selectedX*tile+(cell.spawn?tile/2:cell.offsetX))*scale;
         float cy=area.y+(selectedY*tile+(cell.spawn?tile/2:cell.offsetY))*scale;
-        DrawRectangleLinesEx({cx-half,cy-half,half*2,half*2},2,GOLD);
+        DrawRectangleLinesEx({cx-half.x*scale,cy-half.y*scale,half.x*2*scale,half.y*2*scale},2,GOLD);
     }
     if (mode==Mode::Select || contextOpen || editingName) return;
     Vector2 mouse=GetMousePosition();
@@ -27,6 +27,10 @@ void Editor::drawSelection(Rectangle area,float scale,const Rendering::GameAsset
         BeginMode2D(camera);
         Rendering::drawObject(preview,assets,x*tile+preview.offsetX,y*tile+preview.offsetY,Fade(valid?WHITE:RED,.55f));
         EndMode2D();
+        const auto half=preview.objectHalfExtents();
+        box={area.x+(x*tile+preview.offsetX-half.x)*scale,
+             area.y+(y*tile+preview.offsetY-half.y)*scale,
+             half.x*2*scale,half.y*2*scale};
     } else if (mode==Mode::Terrain) {
         auto t=assets.terrain[terrainId];
         DrawTexturePro(t,{0,0,float(t.width),float(t.height)},box,{0,0},0,Fade(WHITE,.55f));

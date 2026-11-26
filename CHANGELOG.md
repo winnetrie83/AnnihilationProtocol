@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.4 – Native object proportions
+- Preserve original Retina PNG proportions and relative sizes using a shared 0.5 base scale.
+- Match rectangular collision, selection, spawn clearance and ghost bounds to object dimensions and quarter-turn rotation.
+- Keep terrain, tank rendering, map format and assets unchanged. Older maps retain their scale percentages but object footprints may change.
+
 ## 0.2.3 – Object editing and map browser
 - Move existing objects and numbered spawns using M or the context menu, with cancellable ghost placement.
 - Toggle grid snapping for object centres; set scale from 50% to 200%; preserve background and copied properties.

@@ -33,9 +33,9 @@ void Editor::pick(float wx,float wy) {
         for (int x=std::min(map.width()-1,int(wx/tile)+2);x>=std::max(0,int(wx/tile)-2);--x) {
             const Cell& cell=map.at(x,y);
             if (!cell.occupied()) continue;
-            float half=cell.spawn?22.f:cell.halfSize();
+            const auto half=cell.spawn?AnnihilationProtocol::Vec{22.f,22.f}:cell.objectHalfExtents();
             float cx=x*tile+(cell.spawn?tile/2:cell.offsetX), cy=y*tile+(cell.spawn?tile/2:cell.offsetY);
-            if (std::abs(wx-cx)<=half && std::abs(wy-cy)<=half) { selectedX=x; selectedY=y; return; }
+            if (std::abs(wx-cx)<=half.x && std::abs(wy-cy)<=half.y) { selectedX=x; selectedY=y; return; }
         }
 }
 // Vereiste 29: 29. useful member function

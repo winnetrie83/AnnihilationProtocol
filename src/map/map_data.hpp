@@ -26,7 +26,17 @@ struct Cell {
     bool solid = true;
     int offsetX = 32, offsetY = 32; // object centre within its cell
     int sizePercent = 100;
-    float halfSize() const { return 30.f * sizePercent / 100.f; }
+    // Native sprite proportions are shared by rendering, selection and collision.
+    AnnihilationProtocol::Vec objectSize() const {
+        const auto& asset = objectCatalog.at(static_cast<std::size_t>(object));
+        const float scale = objectBaseScale * sizePercent / 100.f;
+        return {asset.width * scale, asset.height * scale};
+    }
+    AnnihilationProtocol::Vec objectHalfExtents() const {
+        const auto size = objectSize();
+        if (rotation % 2 != 0) return {size.y / 2, size.x / 2};
+        return {size.x / 2, size.y / 2};
+    }
     bool occupied() const { return object != Object::None || spawn != 0; }
     void clearObject() { const auto background = terrain; *this = Cell{}; terrain = background; }
     bool blocks() const { return object != Object::None && solid; }

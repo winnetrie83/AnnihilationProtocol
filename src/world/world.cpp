@@ -48,9 +48,9 @@ bool World::blocked(Vec p, float r) const {
             if (!at(x,y).blocks()) continue;
             const Cell& cell=at(x,y);
             const float ox=x*tile+cell.offsetX, oy=y*tile+cell.offsetY;
-            const float half=cell.halfSize();
-            const float cx=std::clamp(p.x,ox-half,ox+half);
-            const float cy=std::clamp(p.y,oy-half,oy+half);
+            const auto half=cell.objectHalfExtents();
+            const float cx=std::clamp(p.x,ox-half.x,ox+half.x);
+            const float cy=std::clamp(p.y,oy-half.y,oy+half.y);
             if ((p.x-cx)*(p.x-cx)+(p.y-cy)*(p.y-cy) <= r*r) return true;
         }
     }

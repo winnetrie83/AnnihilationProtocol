@@ -131,7 +131,7 @@ int GameApplication::run() {
 // Een fout bij het laden van assets wordt gelogd; daarna sluiten audio en venster.
 int GameApplication::execute() {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE|FLAG_VSYNC_HINT);
-    InitWindow(1280,800,"Annihilation Protocol v0.2.3");
+    InitWindow(1280,800,"Annihilation Protocol v0.2.4");
     SetWindowMinSize(800,600);
     SetExitKey(KEY_NULL);
     SetTargetFPS(60);

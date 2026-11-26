@@ -16,8 +16,8 @@ static void sprite(Texture2D t,float x,float y,float w,float h,float angle=0) {
 void drawObject(const Battlefield::Cell& cell,const GameAssets& assets,float x,float y,Color tint) {
     if (cell.object == Battlefield::Object::None) return;
     const auto texture = assets.objects.at(int(cell.object));
-    const float scale = 60.f * cell.sizePercent / 100.f / (texture.width > texture.height ? texture.width : texture.height);
-    const float w = texture.width * scale, h = texture.height * scale;
+    const auto size = cell.objectSize();
+    const float w = size.x, h = size.y;
     DrawTexturePro(texture,{0,0,float(texture.width),float(texture.height)},
                    {x,y,w,h},{w/2,h/2},90.f*cell.rotation,tint);
 }
