@@ -1,5 +1,6 @@
 #include "map_data.hpp"
 #include <stdexcept>
+#include <algorithm>
 
 namespace Battlefield {
 namespace {
@@ -57,11 +58,21 @@ void MapData::validate() const {
     for (int y=0; y<rows; ++y) {
         for (int x=0; x<columns; ++x) {
             const Cell& cell=at(x,y);
-            if (int(cell.terrain)>=int(terrainCatalog.size()) || int(cell.object)>=int(objectCatalog.size()) || cell.rotation<0 || cell.rotation>3)
+            if (int(cell.terrain)>=int(terrainCatalog.size()) || int(cell.object)>=int(objectCatalog.size()) || cell.rotation<0 || cell.rotation>3 || cell.offsetX<0 || cell.offsetX>=tile || cell.offsetY<0 || cell.offsetY>=tile || cell.sizePercent<50 || cell.sizePercent>200)
                 throw std::runtime_error("Unknown map tile");
             if (!cell.spawn) continue;
             if (cell.spawn>maxPlayers || used[cell.spawn]) throw std::runtime_error("Each player needs a unique spawn");
             used[cell.spawn]=true;
+            // A scaled or offset obstacle can reach beyond its own cell.
+            for (int yy=std::max(0,y-2); yy<std::min(rows,y+3); ++yy)
+                for (int xx=std::max(0,x-2); xx<std::min(columns,x+3); ++xx) {
+                    const Cell& obstacle=at(xx,yy);
+                    if (!obstacle.blocks()) continue;
+                    float dx=std::abs((x+.5f)*tile-(xx*tile+obstacle.offsetX));
+                    float dy=std::abs((y+.5f)*tile-(yy*tile+obstacle.offsetY));
+                    if (dx<obstacle.halfSize()+32 && dy<obstacle.halfSize()+32)
+                        throw std::runtime_error("Scaled obstacle too close to spawn");
+                }
             if (x==0 || y==0 || x==columns-1 || y==rows-1 || cell.object!=Object::None ||
                 at(x-1,y).object!=Object::None || at(x+1,y).object!=Object::None ||
                 at(x,y-1).object!=Object::None || at(x,y+1).object!=Object::None)

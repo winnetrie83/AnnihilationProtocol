@@ -7,7 +7,7 @@ void Editor::palette(const Rendering::GameAssets& assets, int height) {
     if (UI::button("Terrain",{12,58,85,30},!contextOpen)) { terrainTab=true; page=0; }
     if (UI::button("Objects",{103,58,85,30},!contextOpen)) { terrainTab=false; page=0; }
     const int count = terrainTab ? int(terrainCatalog.size()) : int(objectCatalog.size())-1;
-    const int perPage = std::max(1,(height-292)/34);
+    const int perPage = std::max(1,(height-326)/34);
     const int lastPage = (count-1)/perPage;
     page=std::clamp(page,0,lastPage);
     for (int row=0; row<perPage && page*perPage+row<count; ++row) {

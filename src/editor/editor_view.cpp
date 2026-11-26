@@ -35,7 +35,10 @@ void Editor::sizeControls() {
     }
     if (width==map.width() && height==map.height()) return;
     try {
-        map.resize(width,height);
+        MapData resized=map;
+        resized.resize(width,height);
+        remember();
+        map=resized;
         cancelTool(); editorZoom=1; pan={}; dirty=true;
         message="Map resized; existing tiles preserved.";
     } catch (const std::exception& e) { message=e.what(); }

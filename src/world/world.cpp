@@ -43,11 +43,14 @@ bool World::blocked(Vec p, float r) const {
         return true;
     if (p.x-r < 0 || p.y-r < 0 || p.x+r >= map.width()*tile || p.y+r >= map.height()*tile)
         return true;
-    for (int y = int((p.y-r)/tile); y <= int((p.y+r)/tile); ++y) {
-        for (int x = int((p.x-r)/tile); x <= int((p.x+r)/tile); ++x) {
+    for (int y = std::max(0,int((p.y-r)/tile)-2); y <= std::min(map.height()-1,int((p.y+r)/tile)+2); ++y) {
+        for (int x = std::max(0,int((p.x-r)/tile)-2); x <= std::min(map.width()-1,int((p.x+r)/tile)+2); ++x) {
             if (!at(x,y).blocks()) continue;
-            const float cx = std::clamp(p.x, float(x*tile), float((x+1)*tile));
-            const float cy = std::clamp(p.y, float(y*tile), float((y+1)*tile));
+            const Cell& cell=at(x,y);
+            const float ox=x*tile+cell.offsetX, oy=y*tile+cell.offsetY;
+            const float half=cell.halfSize();
+            const float cx=std::clamp(p.x,ox-half,ox+half);
+            const float cy=std::clamp(p.y,oy-half,oy+half);
             if ((p.x-cx)*(p.x-cx)+(p.y-cy)*(p.y-cy) <= r*r) return true;
         }
     }

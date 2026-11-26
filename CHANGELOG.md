@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.3 – Object editing and map browser
+- Move existing objects and numbered spawns using M or the context menu, with cancellable ghost placement.
+- Toggle grid snapping for object centres; set scale from 50% to 200%; preserve background and copied properties.
+- Store offsets and scale in map format v4, read v1–v3; update rendering, selection and conservative square collision.
+- Add 30-step undo/redo and paginated saved-map browser.
+- Keep one anchor per cell, existing assets and one executable. No shipped tests.
+
 ## 0.2.2 – Player spawns and larger maps
 - Add numbered spawn slots 1–4, context menu assignment, unique slot validation and capacity calculation for future LAN hosting.
 - Select any available player spawn for local playtesting. LAN remains unimplemented.

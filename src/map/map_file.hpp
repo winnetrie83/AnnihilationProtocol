@@ -11,6 +11,7 @@ public:
     // De editor kiest de map waarin de kaartbestanden bewaard worden.
     explicit MapFile(const std::filesystem::path& directory);
     void save(const std::string& name, const MapData& map) const;
+    std::vector<std::string> list() const;
     MapData load(const std::string& name) const;
 private:
     std::filesystem::path directory;

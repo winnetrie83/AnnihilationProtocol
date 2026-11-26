@@ -16,7 +16,7 @@ static void sprite(Texture2D t,float x,float y,float w,float h,float angle=0) {
 void drawObject(const Battlefield::Cell& cell,const GameAssets& assets,float x,float y,Color tint) {
     if (cell.object == Battlefield::Object::None) return;
     const auto texture = assets.objects.at(int(cell.object));
-    const float scale = 60.f / (texture.width > texture.height ? texture.width : texture.height);
+    const float scale = 60.f * cell.sizePercent / 100.f / (texture.width > texture.height ? texture.width : texture.height);
     const float w = texture.width * scale, h = texture.height * scale;
     DrawTexturePro(texture,{0,0,float(texture.width),float(texture.height)},
                    {x,y,w,h},{w/2,h/2},90.f*cell.rotation,tint);
@@ -27,10 +27,10 @@ void drawMap(const Battlefield::MapData& map,const GameAssets& assets,bool grid,
     if (camera) {
         Vector2 a=GetScreenToWorld2D({0,0},*camera);
         Vector2 b=GetScreenToWorld2D({float(GetScreenWidth()),float(GetScreenHeight())},*camera);
-        firstX=std::clamp(int(a.x/tile)-1,0,lastX);
-        firstY=std::clamp(int(a.y/tile)-1,0,lastY);
-        lastX=std::clamp(int(b.x/tile)+2,firstX,lastX);
-        lastY=std::clamp(int(b.y/tile)+2,firstY,lastY);
+        firstX=std::clamp(int(a.x/tile)-2,0,lastX);
+        firstY=std::clamp(int(a.y/tile)-2,0,lastY);
+        lastX=std::clamp(int(b.x/tile)+3,firstX,lastX);
+        lastY=std::clamp(int(b.y/tile)+3,firstY,lastY);
     }
     for (int y=firstY; y<lastY; ++y) {
         for (int x=firstX; x<lastX; ++x) {
@@ -45,7 +45,7 @@ void drawMap(const Battlefield::MapData& map,const GameAssets& assets,bool grid,
         for (int x=firstX; x<lastX; ++x) {
             const auto& cell = map.at(x,y);
             float px=x*tile+tile/2.f, py=y*tile+tile/2.f;
-            drawObject(cell,assets,px,py);
+            drawObject(cell,assets,x*tile+cell.offsetX,y*tile+cell.offsetY);
             if (showSpawns && cell.spawn) {
                 DrawCircleLines(int(px),int(py),20,GREEN);
                 DrawText(TextFormat("%d",int(cell.spawn)),int(px)-7,int(py)-10,20,WHITE);

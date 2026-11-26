@@ -9,6 +9,7 @@ namespace MapEditor {
 using namespace Battlefield;
 Editor::Editor() : map(MapData::training()), files(std::filesystem::path(ANNIHILATION_PROTOCOL_MAPS)/"custom") {}
 void Editor::reset() {
+    remember();
     map = MapData();
     cancelTool();
     editorZoom=1; pan={}; playtestPlayer=1;
@@ -29,16 +30,19 @@ void Editor::readName(Rectangle field) {
     if (IsKeyPressed(KEY_ENTER)) editingName = false;
 }
 Action Editor::draw(const Rendering::GameAssets& assets, World& world) {
+    if (browserOpen) { browser(); return Action::None; }
+    historyInput();
     const int sw = GetScreenWidth(), sh = GetScreenHeight();
     const float left = 200, top = 88;
     const Rectangle viewport{left,top,sw-left-14,sh-top-100};
-    const Rectangle field{left,float(sh-78),float(std::min(260,sw-530)),28};
+    const Rectangle field{left,float(sh-78),float(std::max(80,std::min(220,sw-650))),28};
     if (!contextOpen) readName(field);
     DrawText("MAP EDITOR",12,12,26,RAYWHITE);
     const char* modeName = mode==Mode::Select ? "SELECT" : mode==Mode::Terrain ? "TERRAIN" : "BUILD";
-    DrawText(TextFormat("%s | Esc: select | Right: properties | Ctrl+C/V | Delete",modeName),int(left),26,14,LIGHTGRAY);
+    DrawText(TextFormat("%s | Esc: select | Right: properties | Ctrl+C/V/Z/Y | M: move",modeName),int(left),26,14,LIGHTGRAY);
     if (IsKeyPressed(KEY_ESCAPE)) { cancelTool(); editingName=false; }
     palette(assets,sh);
+    if (UI::button(snap?"Snap: on":"Snap: off",{12,float(sh-154),176,30},!contextOpen)) snap=!snap;
     sizeControls();
     if (UI::button(confirmNew ? "Confirm new" : "New map",{12,float(sh-118),176,30},!contextOpen)) {
         if (!dirty || confirmNew) { reset(); confirmNew = false; }
@@ -75,10 +79,11 @@ Action Editor::draw(const Rendering::GameAssets& assets, World& world) {
         }
         if (UI::button(confirmLoad ? "Confirm load" : "Load",{x+106,field.y,120,28},!contextOpen)) {
             if (dirty && !confirmLoad) { confirmLoad = true; message = "Click Confirm load to discard unsaved changes."; }
-            else { map = files.load(name); cancelTool(); editorZoom=1; pan={}; playtestPlayer=1; dirty = false; confirmLoad = false; message = "Loaded: "+name+".json"; }
+            else { loadChosen(name); }
             confirmNew = confirmSave = false;
         }
-        if (UI::button("Playtest",{x+232,field.y,90,28},!contextOpen)) {
+        if (UI::button("Browse",{x+232,field.y,90,28},!contextOpen)) openBrowser();
+        if (UI::button("Playtest",{x+328,field.y,90,28},!contextOpen)) {
             world.loadMap(map,playtestPlayer);
             message = "Editor map preserved during playtest.";
             return Action::Play;

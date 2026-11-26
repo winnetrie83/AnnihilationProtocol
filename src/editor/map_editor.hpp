@@ -13,8 +13,24 @@ public:
     Editor();
     Action draw(const Rendering::GameAssets& assets, Battlefield::World& world);
 private:
-    enum class Mode { Select, Terrain, Object, Spawn };
+    enum class Mode { Select, Terrain, Object, Spawn, Move };
     Mode mode = Mode::Select;
+    bool snap = true;
+    bool painting = false;
+    bool browserOpen = false;
+    int browserPage = 0;
+    std::string pendingMap;
+    std::vector<std::string> browserNames;
+    std::vector<Battlefield::MapData> undoStack, redoStack;
+    void remember();
+    void historyInput();
+    void browser();
+    void openBrowser();
+    void loadChosen(const std::string& chosen);
+    void beginMove();
+    Battlefield::Cell placement(int x, int y, Vector2 mouse, Rectangle area, float scale) const;
+    bool canPlace(int x, int y) const;
+    void pick(float wx, float wy);
     bool terrainTab = false;
     int page = 0, terrainId = 0;
     Battlefield::Cell brush;

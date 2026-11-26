@@ -2,6 +2,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <iomanip>
+#include <algorithm>
 
 namespace Battlefield {
 MapFile::MapFile(const std::filesystem::path& directory) : directory(directory) {}
@@ -19,11 +20,11 @@ void MapFile::save(const std::string& name, const MapData& map) const {
     std::filesystem::create_directories(directory);
     std::ofstream out(file);
     if (!out) throw std::runtime_error("Cannot open map for writing");
-    out << "{\n  \"version\": 3,\n  \"width\": " << map.width() << ",\n  \"height\": " << map.height() << ",\n  \"cells\": [\n";
+    out << "{\n  \"version\": 4,\n  \"width\": " << map.width() << ",\n  \"height\": " << map.height() << ",\n  \"cells\": [\n";
     for (int y = 0; y < map.height(); ++y) {
         for (int x = 0; x < map.width(); ++x) {
             const Cell& cell = map.at(x,y);
-            out << "    [" << int(cell.terrain) << ',' << int(cell.object) << ',' << int(cell.spawn) << ',' << cell.rotation << ',' << int(cell.solid) << ']';
+            out << "    [" << int(cell.terrain) << ',' << int(cell.object) << ',' << int(cell.spawn) << ',' << cell.rotation << ',' << int(cell.solid) << ',' << cell.offsetX << ',' << cell.offsetY << ',' << cell.sizePercent << ']' ;
             if (x != map.width()-1 || y != map.height()-1) out << ',';
             out << '\n';
         }
@@ -31,6 +32,17 @@ void MapFile::save(const std::string& name, const MapData& map) const {
     out << "  ]\n}\n";
     out.close();
     if (!out) throw std::runtime_error("Map write failed");
+}
+std::vector<std::string> MapFile::list() const {
+    std::vector<std::string> names;
+    if (!std::filesystem::exists(directory)) return names;
+    for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+        if (!entry.is_regular_file() || entry.path().extension() != ".json") continue;
+        const auto name = entry.path().stem().string();
+        try { path(name); names.push_back(name); } catch (const std::runtime_error&) {}
+    }
+    std::sort(names.begin(), names.end());
+    return names;
 }
 namespace {
 void expect(std::istream& in, char wanted) {
@@ -59,10 +71,10 @@ MapData MapFile::load(const std::string& name) const {
     std::ifstream in(path(name));
     if (!in) throw std::runtime_error("Map file not found");
     expect(in,'{'); key(in,"version");
-    const int version = number(in,3);
+    const int version = number(in,4);
     if (version == 0) throw std::runtime_error("Unsupported map version");
     int width=defaultCols, height=defaultRows, legacyPlayer=0;
-    if (version==3) {
+    if (version>=3) {
         expect(in,','); key(in,"width"); width=number(in,maxMapSize);
         expect(in,','); key(in,"height"); height=number(in,maxMapSize);
         if (width<minMapSize || height<minMapSize) throw std::runtime_error("Map too small");
@@ -73,15 +85,21 @@ MapData MapFile::load(const std::string& name) const {
         if (i != 0) expect(in,',');
         expect(in,'['); int terrain = number(in,version == 1 ? 4 : int(terrainCatalog.size())-1);
         expect(in,','); int object = number(in,version == 1 ? 2 : int(objectCatalog.size())-1);
-        expect(in,','); int spawn = number(in,version==3 ? maxPlayers : 1);
+        expect(in,','); int spawn = number(in,version>=3 ? maxPlayers : 1);
         if (version<3 && spawn) {
             spawn=++legacyPlayer;
             if (spawn>maxPlayers) throw std::runtime_error("Legacy map has more than four spawns");
         }
         int rotation = 0; bool solid = true;
         if (version >= 2) { expect(in,','); rotation = number(in,3); expect(in,','); solid = number(in,1) != 0; }
+        Cell cell{Terrain(terrain),Object(object),static_cast<std::uint8_t>(spawn),rotation,solid};
+        if (version>=4) {
+            expect(in,','); cell.offsetX=number(in,tile-1);
+            expect(in,','); cell.offsetY=number(in,tile-1);
+            expect(in,','); cell.sizePercent=number(in,200);
+        }
         expect(in,']');
-        cells.push_back({Terrain(terrain),Object(object),static_cast<std::uint8_t>(spawn),rotation,solid});
+        cells.push_back(cell);
     }
     expect(in,']'); expect(in,'}');
     in >> std::ws;

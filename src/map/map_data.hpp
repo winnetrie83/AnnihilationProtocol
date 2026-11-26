@@ -24,6 +24,11 @@ struct Cell {
     std::uint8_t spawn = 0; // 0 = none, 1..4 = player slot
     int rotation = 0; // quarter turns, 0..3
     bool solid = true;
+    int offsetX = 32, offsetY = 32; // object centre within its cell
+    int sizePercent = 100;
+    float halfSize() const { return 30.f * sizePercent / 100.f; }
+    bool occupied() const { return object != Object::None || spawn != 0; }
+    void clearObject() { const auto background = terrain; *this = Cell{}; terrain = background; }
     bool blocks() const { return object != Object::None && solid; }
 };
 
