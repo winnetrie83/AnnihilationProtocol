@@ -1,4 +1,4 @@
-# Annihilation Protocol v0.1.5 — Code quality and requirements
+# Annihilation Protocol v0.2.0 — Map editor
 
 C++17 / CMake / raylib 5.5. Windows + Qt Creator (Desktop MinGW).
 
@@ -19,7 +19,7 @@ cmake --build build -j 4
 build\AnnihilationProtocol.exe
 ```
 
-The eight supplied asset packs remain unchanged and are not included in the v0.1.5 update ZIP. Keep the existing `assets/` folder (including licenses) from v0.1.3 beside CMakeLists.txt. For a clean PC, use a complete repository checkout containing the assets. CMake copies them next to the executable. The current game uses selected Retina sprites and a sound effect. Other assets are reserved for future releases. Both tank types use matching Retina PNG _outline chassis and barrel sprites, shared native scale, point filtering and clamped sampling. The barrel rotates around its base (80% of sprite height); muzzle distance follows the same geometry. SVG assets are not used.
+The eight supplied asset packs remain unchanged and are not included in the v0.2.0 update ZIP. Keep the existing `assets/` folder (including licenses) from v0.1.3 beside CMakeLists.txt. For a clean PC, use a complete repository checkout containing the assets. CMake copies them next to the executable. The current game uses selected Retina sprites and a sound effect. Other assets are reserved for future releases. Both tank types use matching Retina PNG _outline chassis and barrel sprites, shared native scale, point filtering and clamped sampling. The barrel rotates around its base (80% of sprite height); muzzle distance follows the same geometry. SVG assets are not used.
 
 ## Controls
 W/S drive, A/D rotate chassis, mouse aims turret, left mouse fires, scroll zooms, G toggles grid, F2 resets current tank, F3 switches between medium and heavy (resets training state), Esc pauses, F11 fullscreen. Training range has solid obstacles, map boundaries and projectile collisions. No opponents or damage system yet.
@@ -27,10 +27,19 @@ W/S drive, A/D rotate chassis, mouse aims turret, left mouse fires, scroll zooms
 ## Architecture
 `AnnihilationProtocol::GameApplication` manages the game loop, input and audio lifetime. `UI` draws menus, `Rendering` loads textures and draws the battlefield, `Battlefield::World` owns the simulation, `Vehicles::Tank` implements shared tank behavior and `Weapons::Shot` represents a projectile. `MediumTank` and `HeavyTank` retain their existing statistics. Shared vector math lives in `common/math.hpp`. One executable, no separate core library or test target. Headers are explicitly listed in CMake. The host will run inside the graphical game, not as a separate server executable.
 
-The training arena, controls, tank stats and asset paths are unchanged. LAN and map editor are still placeholders; damage, opponents and persistent settings are not implemented. The core passed a C++17 syntax check; the full graphical build and runtime have not been verified in this environment.
+The original training layout, controls, tank stats and asset paths are unchanged. LAN remains a placeholder; damage, opponents and persistent settings are not implemented. Map data, file I/O and simulation compiled with C++17 and passed a temporary local smoke check (not shipped); the full graphical build and runtime have not been verified in this environment.
+
+## Map editor
+Open Map Editor in the main menu. The editor starts with a copy of the training map. New map creates an empty grass map; choose a terrain, obstacle or spawn tool on the left, then click or drag across tiles. Right mouse resets a tile to grass and clears its obstacle and spawn; Clear object removes the obstacle and spawn without changing the terrain. The green S denotes a spawn. The map is fixed at 24 × 16 tiles (64 world units per tile). Multiple spawn markers can be stored; playtest uses the first in row order. Each spawn must be away from the outer edge, on an empty cell with its four neighbours clear, so both tank types fit.
+
+Click the name field to enter a name (1–32 ASCII letters, digits, hyphen or underscore). Save and Load use `maps/custom/<name>.json` in the source project directory configured by CMake. Confirm before overwriting a saved map or discarding unsaved edits with New/Load. Back returns to the menu while keeping the in-memory draft until the game closes. Playtest loads an independent copy directly into the existing simulation, even without saving. Use Esc and Return to editor to continue editing. F2/F3 reset the tank at the custom spawn. Training from the main menu restores the original training map and spawn.
+
+The JSON file has version 1 and exactly 384 `[terrain, object, spawn]` entries in row order. Terrain IDs: 0 grass, 1 horizontal road, 2 vertical road, 3 crossing, 4 sand. Object IDs: 0 none, 1 sandbag, 2 tree. Spawn is 0 or 1. The small reader accepts the game's fixed key order and layout, not arbitrary JSON schemas. No new dependency, external editor, asset or additional CMake target is needed. Saving writes directly to the selected file; keep backups of important maps.
+
+`Battlefield::MapData` owns the cells and validates spawn positions; `Battlefield::MapFile` reads/writes maps; `MapEditor::Editor` handles the palette, input and editor screen. Rendering uses the same `drawMap` function for editing and playing.
 
 ## Roadmap
-Map editor, local combat, LAN multiplayer, vehicles and infantry, then game modes. No new assets or tests in this release.
+Local combat, LAN multiplayer, vehicles and infantry, then game modes. No new assets or tests in this release.
 
 ## C++ assignment — requirements overview
 Search for `Vereiste X:` in the source or this README. The English descriptions are taken from the official assignment. **Aanwezig** means an implementation is visible in the source, not that the teacher has awarded the point. **Deels** means incomplete or awaiting verification; **Open** means not implemented. Green criteria (1, 20, 54, 55) belong in README; red criteria (10–12, 14–19) need no source marker. The table intentionally lists all 60, including incomplete criteria.
@@ -58,22 +67,22 @@ Search for `Vereiste X:` in the source or this README. The English descriptions 
 | Vereiste 19: | 19. correct files on git | Deels | .gitignore present; repository not supplied |
 | Vereiste 20: | 20. working build manual as readme on GitHub (project must be possible to build from scratch on a clean PC) | Deels | Build section above; clean PC verification pending |
 | Vereiste 21: | 21. at least 2 default constructors | Aanwezig | World and GameAssets default constructors |
-| Vereiste 22: | 22. at least 2 parameterized constructors | Open | Not yet implemented |
-| Vereiste 23: | 23. at least 2 copy constructors | Open | Not yet implemented |
+| Vereiste 22: | 22. at least 2 parameterized constructors | Aanwezig | map/map_data.hpp and map/map_file.hpp — cells and storage directory |
+| Vereiste 23: | 23. at least 2 copy constructors | Deels | map/map_data.hpp — independent map copy; second useful copy constructor pending |
 | Vereiste 24: | 24. at least 2 destructors | Aanwezig | GameAssets and SoundResource destructors |
 | Vereiste 25: | 25. member initialization in constructors (the stuff behind a colon) | Aanwezig | world/world.cpp |
-| Vereiste 26: | 26. constructor forwarding | Open | Not yet implemented |
+| Vereiste 26: | 26. constructor forwarding | Deels | map/map_data.cpp — delegating constructor; confirm grading interpretation |
 | Vereiste 27: | 27. useful proven (dynamic) polymorphism | Aanwezig | world/world.cpp; F3 selects dynamic tank type |
 | Vereiste 28: | 28. useful usage of "this" (if the code does not work without it) | Open | Not yet implemented |
 | Vereiste 29: | 29. useful member function | Aanwezig | application/game_application.cpp |
 | Vereiste 30: | 30. default values in function definition | Aanwezig | rendering/world_renderer.cpp |
 | Vereiste 31: | 31. useful member variabel | Aanwezig | tanks/tank.hpp |
-| Vereiste 32: | 32. useful getters and setters for member variables | Deels | Tank getters present; useful setter still needed |
+| Vereiste 32: | 32. useful getters and setters for member variables | Aanwezig | map/map_data.hpp — read and change cells; tanks/tank.hpp — position |
 | Vereiste 33: | 33. correct usage of inline function | Aanwezig | common/math.hpp |
 | Vereiste 34: | 34. useful template function or class | Open | Not yet implemented |
 | Vereiste 35: | 35. useful friend function or class | Open | Not yet implemented |
 | Vereiste 36: | 36. everything in one or more self-made useful namespace(s) | Aanwezig | world/world.hpp; meaningful namespaces |
-| Vereiste 37: | 37. 2 useful unsigned chars or other better usage of memory efficient type | Aanwezig | world/world.hpp; Terrain and Object |
+| Vereiste 37: | 37. 2 useful unsigned chars or other better usage of memory efficient type | Aanwezig | map/map_data.hpp; Terrain and Object |
 | Vereiste 38: | 38. at least 4 useful const references for variables | Aanwezig | tank.cpp, tank_renderer.cpp, world_renderer.cpp (two) |
 | Vereiste 39: | 39. at least 4 useful const references for functions | Aanwezig | Tank::step, drawTank, drawWorld (two parameters); also GameAssets::load |
 | Vereiste 40: | 40. 2 useful and correct smart pointers | Deels | One unique_ptr in World; second use pending |
@@ -83,7 +92,7 @@ Search for `Vereiste X:` in the source or this README. The English descriptions 
 | Vereiste 44: | 44. useful string class usage (c++ functionality) | Aanwezig | rendering/game_assets.cpp |
 | Vereiste 45: | 45. useful container class | Aanwezig | world/world.hpp |
 | Vereiste 46: | 46. useful usage of nullptr | Open | Not yet implemented |
-| Vereiste 47: | 47. useful usage of (modern) file-I/O | Open | Not yet implemented |
+| Vereiste 47: | 47. useful usage of (modern) file-I/O | Aanwezig | map/map_file.cpp — JSON file saving/loading |
 | Vereiste 48: | 48. useful exception handling | Aanwezig | application/game_application.cpp |
 | Vereiste 49: | 49. useful usage of a lambda function | Aanwezig | world/world.cpp |
 | Vereiste 50: | 50. useful usage of threads | Open | Not yet implemented |

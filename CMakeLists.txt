@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(AnnihilationProtocol VERSION 0.1.5 LANGUAGES C CXX)
+project(AnnihilationProtocol VERSION 0.2.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -19,6 +19,12 @@ add_executable(AnnihilationProtocol
     src/application/game_application.hpp
     src/common/math.hpp
     src/main.cpp
+    src/map/map_data.cpp
+    src/map/map_data.hpp
+    src/map/map_file.cpp
+    src/map/map_file.hpp
+    src/editor/map_editor.cpp
+    src/editor/map_editor.hpp
     src/rendering/game_assets.cpp
     src/rendering/game_assets.hpp
     src/rendering/tank_renderer.cpp
@@ -38,10 +44,10 @@ add_executable(AnnihilationProtocol
     src/world/world.hpp
 )
 target_include_directories(AnnihilationProtocol PRIVATE
-    src/application src/common src/rendering src/tanks src/ui src/weapons src/world
+    src/application src/common src/rendering src/tanks src/ui src/weapons src/world src/map src/editor
 )
 target_link_libraries(AnnihilationProtocol PRIVATE raylib)
-target_compile_definitions(AnnihilationProtocol PRIVATE ANNIHILATION_PROTOCOL_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/assets")
+target_compile_definitions(AnnihilationProtocol PRIVATE ANNIHILATION_PROTOCOL_MAPS="${CMAKE_CURRENT_SOURCE_DIR}/maps" ANNIHILATION_PROTOCOL_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/assets")
 add_custom_command(TARGET AnnihilationProtocol POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:AnnihilationProtocol>/assets"

@@ -11,22 +11,29 @@ static void sprite(Texture2D t,float x,float y,float w,float h,float angle=0) {
 // Vereiste 58: 58. useful (non trivial) usage of an external library (not Qt)
 // raylib verzorgt de 2D-camera, texturetransformaties, input en audio in het spel.
 // Vereiste 39: 39. at least 4 useful const references for functions
-// World en GameAssets worden via const reference gelezen; geen kopie of wijziging.
-void drawWorld(const Battlefield::World& world,const GameAssets& assets,Camera2D camera,bool grid) {
+// MapData en GameAssets worden via const reference gelezen; geen kopie of wijziging.
+void drawMap(const Battlefield::MapData& map,const GameAssets& assets,bool grid,bool showSpawns) {
     using namespace Battlefield;
-    BeginMode2D(camera);
     for (int y=0; y<rows; ++y) {
         for (int x=0; x<cols; ++x) {
             // Vereiste 38: 38. at least 4 useful const references for variables
             // Lees de kaartcel zonder een kopie te maken of de wereld te wijzigen.
-            const auto& cell=world.at(x,y);
+            const auto& cell=map.at(x,y);
             float px=x*tile+tile/2.f, py=y*tile+tile/2.f;
             sprite(assets.terrain[int(cell.terrain)],px,py,tile,tile);
             if (cell.object==Object::Sandbag) sprite(assets.bag,px,py,60,42);
             if (cell.object==Object::Tree) sprite(assets.tree,px,py,64,64);
+            if (showSpawns && cell.spawn) {
+                DrawCircleLines(int(px),int(py),20,GREEN);
+                DrawText("S",int(px)-7,int(py)-10,20,WHITE);
+            }
             if (grid) DrawRectangleLines(x*tile,y*tile,tile,tile,Fade(BLACK,.3f));
         }
     }
+}
+void drawWorld(const Battlefield::World& world,const GameAssets& assets,Camera2D camera,bool grid) {
+    BeginMode2D(camera);
+    drawMap(world.mapData(),assets,grid);
     const auto index=static_cast<std::size_t>(world.player().type());
     drawTank(world.player(),assets.bodies.at(index),assets.barrels.at(index));
     // Vereiste 38: 38. at least 4 useful const references for variables

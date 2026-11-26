@@ -4,6 +4,7 @@
 #include "game_assets.hpp"
 #include "world_renderer.hpp"
 #include "menus.hpp"
+#include "map_editor.hpp"
 #include <algorithm>
 #include <string>
 #include <exception>
@@ -20,9 +21,9 @@ struct SoundResource {
     ~SoundResource() { if (value.frameCount) UnloadSound(value); }
 };
 Vector2 toVector2(Vec position) { return {position.x,position.y}; }
-void drawHud(const Battlefield::World& world, int sw, int sh) {
+void drawHud(const Battlefield::World& world, int sw, int sh, bool playtest) {
     DrawRectangle(0,0,sw,48,Fade(BLACK,.8f));
-    DrawText(TextFormat("TRAINING RANGE / %s",world.player().stats().name),14,12,22,RAYWHITE);
+    DrawText(TextFormat("%s / %s",playtest ? "MAP PLAYTEST" : "TRAINING RANGE",world.player().stats().name),14,12,22,RAYWHITE);
     DrawText(TextFormat("Shots: %u",world.shotCount()),sw-150,15,18,RAYWHITE);
     DrawRectangle(0,sh-32,sw,32,Fade(BLACK,.8f));
     DrawText("W/S Drive  A/D Turn  Mouse Aim/Fire  Wheel Zoom  G Grid  F2 Reset  F3 Tank  ESC Pause",10,sh-24,14,RAYWHITE);
@@ -38,7 +39,9 @@ Vehicles::Input readInput(Camera2D camera, Vec position) {
 int GameApplication::run() {
     Rendering::GameAssets assets;
     Battlefield::World world;
-    enum class Screen { Menu, Game, Settings, Planned };
+    MapEditor::Editor editor;
+    bool playtest = false;
+    enum class Screen { Menu, Game, Settings, Planned, Editor };
     Screen screen=Screen::Menu;
     std::string planned;
     bool grid=false, paused=false, exit=false;
@@ -87,10 +90,10 @@ int GameApplication::run() {
         switch (screen) {
         case Screen::Menu:
             switch (UI::mainMenu(sw,sh)) {
-            case UI::MenuAction::Training: world.resetTank(); paused=false; accumulator=0; screen=Screen::Game; break;
-            case UI::MenuAction::Host: planned="LAN hosting - planned for v0.3"; screen=Screen::Planned; break;
-            case UI::MenuAction::Join: planned="LAN joining - planned for v0.3"; screen=Screen::Planned; break;
-            case UI::MenuAction::Editor: planned="Map editor - planned for v0.2"; screen=Screen::Planned; break;
+            case UI::MenuAction::Training: world.loadTraining(); playtest=false; paused=false; accumulator=0; screen=Screen::Game; break;
+            case UI::MenuAction::Host: planned="LAN hosting - planned for v0.4"; screen=Screen::Planned; break;
+            case UI::MenuAction::Join: planned="LAN joining - planned for v0.4"; screen=Screen::Planned; break;
+            case UI::MenuAction::Editor: screen=Screen::Editor; break;
             case UI::MenuAction::Settings: screen=Screen::Settings; break;
             case UI::MenuAction::Exit: exit=true; break;
             default: break;
@@ -98,8 +101,15 @@ int GameApplication::run() {
             break;
         case Screen::Game:
             Rendering::drawWorld(world,assets,camera,grid);
-            drawHud(world,sw,sh);
-            if (paused && UI::pauseMenu(sw,sh,paused)) screen=Screen::Menu;
+            drawHud(world,sw,sh,playtest);
+            if (paused && UI::pauseMenu(sw,sh,paused,playtest)) screen=playtest ? Screen::Editor : Screen::Menu;
+            break;
+        case Screen::Editor:
+            switch (editor.draw(assets,world)) {
+            case MapEditor::Action::Back: screen=Screen::Menu; break;
+            case MapEditor::Action::Play: playtest=true; paused=false; accumulator=0; screen=Screen::Game; break;
+            default: break;
+            }
             break;
         case Screen::Settings:
             if (UI::settingsMenu(sw,volume)) screen=Screen::Menu;
@@ -119,7 +129,7 @@ int GameApplication::run() {
 // Een fout bij het laden van assets wordt gelogd; daarna sluiten audio en venster.
 int GameApplication::execute() {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE|FLAG_VSYNC_HINT);
-    InitWindow(1280,800,"Annihilation Protocol v0.1.5");
+    InitWindow(1280,800,"Annihilation Protocol v0.2.0");
     SetWindowMinSize(800,600);
     SetExitKey(KEY_NULL);
     SetTargetFPS(60);

@@ -17,7 +17,7 @@ bool button(const char* label, Rectangle bounds, bool enabled) {
 }
 MenuAction mainMenu(int sw, int sh) {
     centered("ANNIHILATION PROTOCOL",42,42,RAYWHITE);
-    centered("TACTICAL TANK COMBAT  /  v0.1.5",100,18,LIGHTGRAY);
+    centered("TACTICAL TANK COMBAT  /  v0.2.0",100,18,LIGHTGRAY);
     float width=std::min(420.f,float(sw-40)), x=(sw-width)/2;
     float h=std::min(48.f,(sh-190)/7.f), y=145;
     const char* labels[]={"Singleplayer - Training","Host LAN Game","Join LAN Game","Map Editor","Settings","Exit"};
@@ -40,11 +40,11 @@ bool settingsMenu(int sw, float& volume) {
     if (button("Toggle fullscreen",{sw/2.f-150,235,300,45})) ToggleFullscreen();
     return button("Back",{sw/2.f-150,295,300,45});
 }
-bool pauseMenu(int sw,int sh,bool& paused) {
+bool pauseMenu(int sw,int sh,bool& paused,bool playtest) {
     DrawRectangle(0,0,sw,sh,Fade(BLACK,.65f));
     centered("PAUSED",sh/2-110,35,RAYWHITE);
     if (button("Resume",{sw/2.f-140,sh/2.f-50,280,45})) paused=false;
-    return button("Main menu",{sw/2.f-140,sh/2.f+8,280,45});
+    return button(playtest ? "Return to editor" : "Main menu",{sw/2.f-140,sh/2.f+8,280,45});
 }
 bool plannedMenu(int sw,int sh,const char* message) {
     centered(message,sh/2-70,20,RAYWHITE);

@@ -30,6 +30,7 @@ public:
     virtual const TankStats& stats() const = 0;
     virtual TankType type() const = 0;
     Vec position() const { return pos; }
+    void setPosition(Vec position) { pos = position; }
     float heading() const { return bodyAngle; }
     float aim() const { return turretAngle; }
     std::optional<Weapons::Shot> step(const Battlefield::World& world, Input input, float dt);

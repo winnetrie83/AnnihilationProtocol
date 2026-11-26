@@ -8,32 +8,20 @@ namespace Battlefield {
 using Vehicles::MediumTank;
 using Vehicles::HeavyTank;
 // Vereiste 25: 25. member initialization in constructors (the stuff behind a colon)
-// De vector wordt meteen met de volledige kaartgrootte geconstrueerd.
-World::World() : tank(std::make_unique<MediumTank>()), cells(cols * rows) {
-    for (int y = 0; y < rows; ++y) {
-        for (int x = 0; x < cols; ++x) {
-            auto& cell = mutableCell(x, y);
-            if (x == 12 && y == 7) cell.terrain = Terrain::Crossing;
-            else if (x == 12) cell.terrain = Terrain::RoadY;
-            else if (y == 7) cell.terrain = Terrain::RoadX;
-            else if (x > 18 && y < 5) cell.terrain = Terrain::Sand;
-        }
-    }
-    for (int x = 4; x < 9; ++x) mutableCell(x, 5).object = Object::Sandbag;
-    for (int x = 15; x < 20; ++x) mutableCell(x, 10).object = Object::Sandbag;
-    for (auto p : std::vector<Vec>{{2,2},{5,12},{20,12},{18,3},{9,2},{3,10},{21,6}})
-        mutableCell(int(p.x), int(p.y)).object = Object::Tree;
+// De wereld krijgt meteen een trainingskaart en een concrete tank.
+World::World() : map(MapData::training()), tank(std::make_unique<MediumTank>()) {}
+void World::loadMap(const MapData& newMap) {
+    Vec newSpawn = newMap.spawnPosition();
+    MapData copy(newMap);
+    map = copy;
+    spawn = newSpawn;
+    resetTank();
 }
-
-namespace {
-std::size_t cellIndex(int x, int y) {
-    if (x < 0 || x >= cols || y < 0 || y >= rows)
-        throw std::out_of_range("Map coordinates outside world");
-    return static_cast<std::size_t>(y * cols + x);
+void World::loadTraining() {
+    map = MapData::training();
+    spawn = {800,700};
+    resetTank();
 }
-}
-const Cell& World::at(int x, int y) const { return cells.at(cellIndex(x, y)); }
-Cell& World::mutableCell(int x, int y) { return cells.at(cellIndex(x, y)); }
 void World::resetTank() {
     selectTank(tank->type());
 }
@@ -45,6 +33,7 @@ void World::selectTank(TankType type) {
     // Toewijzing aan unique_ptr vernietigt de vorige tank automatisch via de virtuele destructor.
     if (type == TankType::Heavy) tank = std::make_unique<HeavyTank>();
     else tank = std::make_unique<MediumTank>();
+    tank->setPosition(spawn);
     shots.clear();
     fired = 0;
 }

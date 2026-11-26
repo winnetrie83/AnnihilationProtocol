@@ -8,6 +8,6 @@ bool button(const char* label, Rectangle bounds, bool enabled = true);
 enum class MenuAction { None, Training, Host, Join, Editor, Settings, Exit };
 MenuAction mainMenu(int width, int height);
 bool settingsMenu(int width, float& volume);
-bool pauseMenu(int width, int height, bool& paused);
+bool pauseMenu(int width, int height, bool& paused, bool playtest = false);
 bool plannedMenu(int width, int height, const char* message);
 }

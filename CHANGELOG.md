@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 - Map editor
+- Add an integrated map editor with terrain and obstacle tools, spawn markers and a fixed 24 × 16 grid.
+- Save and load named JSON maps with input validation and overwrite confirmation.
+- Playtest an independent copy of the map in the existing tank simulation; return to editor from pause menu.
+- Separate map data, file I/O and editor UI; share terrain rendering and keep one executable.
+- Preserve original training layout, spawn, controls, tank statistics and assets. Assets omitted from ZIP.
+- Annotate C++ requirements and update README. Core compilation and temporary map smoke check passed; full graphical build not verified.
+
 ## 0.1.5 - Code quality and requirements
 - Replace ap with AnnihilationProtocol, Vehicles, Battlefield, Rendering, Weapons and UI namespaces.
 - Separate shared math, projectile data, asset loading, menu drawing and world rendering from the application loop.
